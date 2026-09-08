@@ -1,0 +1,89 @@
+{
+    "name": "tanthammar/filament-country-select",
+    "description": "A country select form field, table column and table filter for Filament, with flags, translations and optional international dialling codes.",
+    "keywords": [
+        "laravel",
+        "filament",
+        "country",
+        "select",
+        "flags",
+        "dialling code"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tina Hammar",
+            "email": "tinahammar@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/tanthammar/filament-country-select",
+    "support": {
+        "issues": "https://github.com/tanthammar/filament-country-select/issues",
+        "source": "https://github.com/tanthammar/filament-country-select"
+    },
+    "require": {
+        "php": "^8.3",
+        "filament/filament": "^5.0|^4.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^2.9||^3.0",
+        "laravel/pint": "^1.14",
+        "nunomaduro/collision": "^8.1.1||^7.10.0",
+        "orchestra/testbench": "^11.0.0||^10.0.0||^9.0.0",
+        "pestphp/pest": "^4.0||^3.0||^2.34|^5.0",
+        "pestphp/pest-plugin-arch": "^4.0||^3.0||^2.7|^5.0",
+        "pestphp/pest-plugin-laravel": "^4.0||^3.0||^2.3|^5.0",
+        "phpstan/extension-installer": "^1.3||^2.0",
+        "phpstan/phpstan-deprecation-rules": "^1.1||^2.0",
+        "phpstan/phpstan-phpunit": "^1.3||^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TantHammar\\FilamentCountrySelect\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TantHammar\\FilamentCountrySelect\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": "@composer run prepare",
+        "clear": "@php vendor/bin/testbench package:purge-filament-country-select --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": [
+            "@composer run prepare",
+            "@php vendor/bin/testbench workbench:build --ansi"
+        ],
+        "start": [
+            "Composer\\Config::disableProcessTimeout",
+            "@composer run build",
+            "@php vendor/bin/testbench serve"
+        ],
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TantHammar\\FilamentCountrySelect\\FilamentCountrySelectServiceProvider"
+            ],
+            "aliases": {
+                "FilamentCountrySelect": "TantHammar\\FilamentCountrySelect\\Facades\\FilamentCountrySelect"
+            }
+        }
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true
+}
