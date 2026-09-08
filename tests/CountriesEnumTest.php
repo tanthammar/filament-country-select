@@ -71,3 +71,19 @@ it('translates every country in every language it ships', function () {
         expect($missing)->toBeEmpty("{$locale} is missing names");
     }
 });
+
+// The values the README documents, so the examples cannot drift from the code.
+it('exposes a country through the documented getters', function () {
+    app()->setLocale('sv');
+
+    $country = CountriesEnum::from('SE');
+
+    expect($country->value)->toBe('SE')
+        ->and($country->getLabel())->toBe('Sverige')
+        ->and($country->getName('es'))->toBe('Suecia')
+        ->and($country->getName())->toBe('Sverige')
+        ->and($country->getDialCode())->toBe('+46')
+        ->and($country->getAlpha3())->toBe('SWE')
+        ->and($country->getFlag())->toBe('🇸🇪')
+        ->and($country->getFlagAlias())->toBe('se');
+});
