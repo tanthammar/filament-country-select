@@ -3,9 +3,11 @@
 For [Filament](https://filamentphp.com). 246 countries, named in 38 languages, with optional flags and optional
 international dialling codes for building a phone number input.
 
-The value is always the **ISO 3166-1 alpha-2 country code** (`SE`, `US`, `CA`), never the dialling code. A dialling
-code does not identify a country — the United States and Canada share `+1`, Russia and Kazakhstan share `+7` — so
-storing one loses information that cannot be recovered. `->phone()` adds the dialling code to the label only.
+The Country Select returns the **ISO 3166-1 alpha-2 country code** (`SE`, `US`, `CA`).
+The package has helpers to resolve the dialling code from a country code — see
+[Dialling codes](#dialling-codes).
+The `->phone()` feature simply adds the dialling code to the select's option label.
+
 
 ## Installation
 
