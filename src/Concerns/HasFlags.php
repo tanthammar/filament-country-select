@@ -8,12 +8,7 @@ trait HasFlags
 {
     protected bool|Closure $showFlags = false;
 
-    /**
-     * Show a flag beside every country. Off by default, because the flags are image files that
-     * have to be published first.
-     *
-     * @see https://github.com/tanthammar/filament-country-select#flags
-     */
+    /** The flag files have to be published first. */
     public function showFlags(bool|Closure $showFlags = true): static
     {
         $this->showFlags = $showFlags;

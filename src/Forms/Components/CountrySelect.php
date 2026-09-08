@@ -22,8 +22,6 @@ class CountrySelect extends Select
         parent::setUp();
 
         $this->native(false);
-        // Only a flag needs markup. Without one an option is just its name, which Filament can
-        // escape and render as an ordinary option.
         $this->allowHtml(fn (): bool => $this->getShowFlags());
         $this->optionsLimit(config('filament-country-select.options-limit'));
 
@@ -33,8 +31,6 @@ class CountrySelect extends Select
             $this->matching($search)
         ));
 
-        // The label of the one selected country, looked up and built on its own. Reading it out
-        // of the whole option list would build all 246 of them a second time per render.
         $this->getOptionLabelUsing(function ($value): ?string {
             $country = $this->getCountry($value);
 
@@ -50,8 +46,6 @@ class CountrySelect extends Select
     }
 
     /**
-     * The countries a search matches, by name and, when dialling codes are shown, by code.
-     *
      * @return array<int, array{key: string, iso_code: ?string, label: string, dial_code: ?string}>
      */
     protected function matching(string $search): array

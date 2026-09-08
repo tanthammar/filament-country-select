@@ -1,6 +1,6 @@
 {
     "name": "tanthammar/filament-country-select",
-    "description": "A country select form field, table column and table filter for Filament, with flags, translations and optional international dialling codes.",
+    "description": "A country and dialling code select, table column and table filter for Filament. 246 countries, named in 38 languages, with optional flags.",
     "keywords": [
         "laravel",
         "filament",
@@ -78,10 +78,7 @@
         "laravel": {
             "providers": [
                 "TantHammar\\FilamentCountrySelect\\FilamentCountrySelectServiceProvider"
-            ],
-            "aliases": {
-                "FilamentCountrySelect": "TantHammar\\FilamentCountrySelect\\Facades\\FilamentCountrySelect"
-            }
+            ]
         }
     },
     "minimum-stability": "beta",

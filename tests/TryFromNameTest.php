@@ -53,8 +53,7 @@ it('resolves nothing for what is not a country', function (?string $name) {
     'null' => null,
 ]);
 
-// Holland is what Danish and Estonian call the Netherlands, so it resolves from those
-// translations rather than from a guess about a region standing in for its country.
+// Holland is what Danish and Estonian call the Netherlands, not a region standing in for it.
 it('resolves a name that another language uses for the whole country', function () {
     expect(CountriesEnum::tryFromName('Holland')?->value)->toBe('NL');
 });

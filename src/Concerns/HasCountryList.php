@@ -4,11 +4,6 @@ namespace TantHammar\FilamentCountrySelect\Concerns;
 
 use Closure;
 
-/**
- * Shapes which countries a component offers. Renaming a country's stored code is deliberately
- * not offered: the stored value is always the ISO code, and a form that needs to read or write
- * something else can say so with Filament's own formatStateUsing() and dehydrateStateUsing().
- */
 trait HasCountryList
 {
     protected array|Closure $only = [];
@@ -17,7 +12,6 @@ trait HasCountryList
 
     protected array|Closure $add = [];
 
-    /** Show only these countries, in the order the package lists them. */
     public function only(array|Closure $countries): static
     {
         $this->only = $countries;
@@ -25,7 +19,6 @@ trait HasCountryList
         return $this;
     }
 
-    /** Show every country but these. */
     public function exclude(array|Closure $countries): static
     {
         $this->exclude = $countries;
@@ -33,10 +26,7 @@ trait HasCountryList
         return $this;
     }
 
-    /**
-     * Add entries of your own, as code => label, such as ['XX' => 'Other'].
-     * They are not countries, so they carry no flag and no dialling code.
-     */
+    /** Entries of your own, as code => label. Not countries, so no flag and no dialling code. */
     public function add(array|Closure $countries): static
     {
         $this->add = $countries;

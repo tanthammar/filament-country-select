@@ -13,13 +13,8 @@ trait HasCountryData
     /** @var array<string, array{key: string, iso_code: ?string, label: string, dial_code: ?string}>|null */
     protected ?array $countryIndex = null;
 
-    protected ?string $flagsPath = null;
-
     /**
-     * The countries to offer, shaped by only(), exclude() and add().
-     *
-     * A row's key is what gets stored, its iso_code is the country it draws a flag from. They
-     * are the same for a country, and an added entry has no iso_code at all.
+     * key is what gets stored, iso_code is what draws a flag. An added entry has no iso_code.
      *
      * @return array<int, array{key: string, iso_code: ?string, label: string, dial_code: ?string}>
      */
@@ -29,8 +24,8 @@ trait HasCountryData
             return $this->countriesData;
         }
 
-        $only = $this->listOption('getOnly');
-        $exclude = $this->listOption('getExclude');
+        $only = $this->getOnly();
+        $exclude = $this->getExclude();
 
         $countries = collect(CountriesEnum::cases())
             ->when($only !== [], fn ($countries) => $countries->filter(
@@ -45,7 +40,7 @@ trait HasCountryData
             ])
             ->values();
 
-        foreach ($this->listOption('getAdd') as $key => $label) {
+        foreach ($this->getAdd() as $key => $label) {
             $countries->push([
                 'key' => $key,
                 'iso_code' => null,
@@ -60,9 +55,6 @@ trait HasCountryData
     }
 
     /**
-     * Looked up by key rather than scanned for. A table column asks for the same country once
-     * per row, and scanning the whole list each time is a lot of work to do per row.
-     *
      * @return array{key: string, iso_code: ?string, label: string, dial_code: ?string}|null
      */
     public function getCountry(?string $key): ?array
@@ -72,7 +64,6 @@ trait HasCountryData
         return $this->countryIndex[Str::upper((string) $key)] ?? null;
     }
 
-    /** The country name for a stored value, dialling code appended when asked for. */
     public function getCountryLabel(?string $key): ?string
     {
         $country = $this->getCountry($key);
@@ -86,40 +77,16 @@ trait HasCountryData
             : $country['label'];
     }
 
-    /** The flag alias for a stored value, null when it draws no flag. */
-    public function getCountryFlag(?string $key): ?string
+    /** Null for an added entry, which is not a country and draws no flag. */
+    public function getCountryFlagUrl(?string $key): ?string
     {
         $isoCode = $this->getCountry($key)['iso_code'] ?? null;
 
-        return $isoCode === null ? null : Str::lower($isoCode);
-    }
-
-    /** The published url of a country's flag, null when it draws no flag. */
-    public function getCountryFlagUrl(?string $key): ?string
-    {
-        return $this->flagUrl($this->getCountry($key)['iso_code'] ?? null);
-    }
-
-    /** The published url of a flag, from an ISO code that is already known. */
-    protected function flagUrl(?string $isoCode): ?string
-    {
-        if ($isoCode === null) {
-            return null;
-        }
-
-        $this->flagsPath ??= trim((string) config('filament-country-select.flags-path'), '/');
-
-        return asset($this->flagsPath.'/'.Str::lower($isoCode).'.svg');
+        return $isoCode === null ? null : CountriesEnum::from($isoCode)->getFlagUrl();
     }
 
     protected function wantsDialCode(): bool
     {
-        return method_exists($this, 'getPhone') && $this->getPhone();
-    }
-
-    /** @return array<array-key, string> */
-    protected function listOption(string $method): array
-    {
-        return method_exists($this, $method) ? $this->{$method}() : [];
+        return $this->getPhone();
     }
 }

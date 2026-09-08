@@ -12,11 +12,8 @@ use TantHammar\FilamentCountrySelect\Concerns\HasCountryData;
 use TantHammar\FilamentCountrySelect\Concerns\HasCountryList;
 use TantHammar\FilamentCountrySelect\Concerns\HasFlags;
 use TantHammar\FilamentCountrySelect\Concerns\HasPhoneCode;
+use TantHammar\FilamentCountrySelect\Enums\CountriesEnum;
 
-/**
- * Rendered as an embedded view rather than from a blade file, the way Filament's own
- * ColorColumn is, so a table pays no view render per row.
- */
 class CountryColumn extends Column implements HasEmbeddedView
 {
     use CanWrap;
@@ -61,13 +58,13 @@ class CountryColumn extends Column implements HasEmbeddedView
             <?php return ob_get_clean();
         }
 
-        $flag = $this->getShowFlags() ? $this->getCountryFlagUrl($state) : null;
+        $flag = $this->getShowFlags() ? $this->getCountry($state)['iso_code'] ?? null : null;
 
         ob_start(); ?>
 
         <div <?= $attributes->toHtml() ?>>
             <?php if (filled($flag)) { ?>
-                <img src="<?= e($flag) ?>" alt="" width="24" height="20" class="h-5 w-6 shrink-0 object-contain" loading="lazy">
+                <?= CountriesEnum::from($flag)->getFlag() ?>
             <?php } ?>
 
             <span class="fi-ta-text-item-label">

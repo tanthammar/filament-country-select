@@ -2,10 +2,6 @@
 
 Copyright (c) Tina Hammar
 
-This package is derived from tapp/filament-country-code-field:
-
-Copyright (c) Tapp Network
-
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
 > in the Software without restriction, including without limitation the rights

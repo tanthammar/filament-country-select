@@ -30,8 +30,7 @@ it('covers every iso 3166-1 country that can be reached', function () {
         ->and(CountriesEnum::tryFrom('XK'))->not->toBeNull();
 });
 
-// Uninhabited territories with no telephone service of their own are left out, so that a
-// dialling code never has to be null.
+// Territories with no telephone service are left out, so a dialling code is never null.
 it('leaves out territories that cannot be reached', function () {
     foreach (['BV', 'HM', 'TF', 'UM'] as $unreachable) {
         expect(CountriesEnum::tryFrom($unreachable))->toBeNull();
@@ -41,14 +40,14 @@ it('leaves out territories that cannot be reached', function () {
 it('has an alpha3 code and a flag emoji for every country', function () {
     foreach (CountriesEnum::cases() as $country) {
         expect($country->getAlpha3())->toMatch('/^[A-Z]{3}$/')
-            ->and(mb_strlen($country->getFlag()))->toBe(2);
+            ->and(mb_strlen($country->getEmojiFlag()))->toBe(2);
     }
 });
 
 it('has a flag for every country', function () {
     $missing = collect(CountriesEnum::cases())
         ->reject(fn (CountriesEnum $country): bool => file_exists(
-            __DIR__.'/../resources/svg/'.mb_strtolower($country->value).'.svg'
+            __DIR__.'/../resources/flags/'.$country->value.'.png'
         ))
         ->map(fn (CountriesEnum $country): string => $country->value);
 
@@ -84,6 +83,34 @@ it('exposes a country through the documented getters', function () {
         ->and($country->getName())->toBe('Sverige')
         ->and($country->getDialCode())->toBe('+46')
         ->and($country->getAlpha3())->toBe('SWE')
-        ->and($country->getFlag())->toBe('🇸🇪')
-        ->and($country->getFlagAlias())->toBe('se');
+        ->and($country->getEmojiFlag())->toBe('🇸🇪')
+        ->and((string) $country->getFlag())->toContain('flags/SE.png')
+        ->and($country->getFlagUrl())->toEndWith('/SE.png');
+});
+
+it('falls back to the language configured for it', function () {
+    config()->set('app.fallback_locale', 'vi');
+    config()->set('filament-country-select.fallback-locale', 'sv');
+    app()->setLocale('vi');
+
+    expect(CountriesEnum::SE->getLabel())->toBe('Sverige');
+});
+
+// A locale the package does not ship must not put a translation key on the page.
+it('falls back to english for a language it does not ship', function () {
+    config()->set('filament-country-select.fallback-locale', 'vi');
+    config()->set('app.fallback_locale', 'vi');
+    app()->setLocale('vi');
+
+    expect(CountriesEnum::SE->getLabel())->toBe('Sweden')
+        ->and(CountriesEnum::SE->getName('vi'))->toBe('Sweden')
+        ->and(CountriesEnum::SE->getName())->not->toContain('filament-country-select');
+});
+
+it('still uses a language it does ship', function () {
+    config()->set('app.fallback_locale', 'vi');
+    app()->setLocale('de');
+
+    expect(CountriesEnum::SE->getLabel())->toBe('Schweden')
+        ->and(CountriesEnum::SE->getName('ja'))->toBe('スウェーデン');
 });

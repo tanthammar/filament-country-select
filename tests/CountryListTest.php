@@ -33,8 +33,8 @@ it('adds entries of its own after the countries', function () {
 
     expect($filter->getCountries())->toBe(['SE' => 'Sweden', 'XX' => 'Other'])
         ->and($filter->getCountryLabel('XX'))->toBe('Other')
-        ->and($filter->getCountryFlag('XX'))->toBeNull()
-        ->and($filter->getCountryFlag('SE'))->toBe('se');
+        ->and($filter->getCountryFlagUrl('XX'))->toBeNull()
+        ->and($filter->getCountryFlagUrl('SE'))->toEndWith('/SE.png');
 });
 
 it('gives an added entry no dialling code', function () {
@@ -70,7 +70,7 @@ it('links a published flag file rather than inlining it', function () {
     $select = CountrySelect::make('country_code')->only(['SE'])->showFlags();
 
     expect($select->getShowFlags())->toBeTrue()
-        ->and($select->getCountryFlagUrl('SE'))->toEndWith('/vendor/filament-country-select/flags/se.svg')
+        ->and($select->getCountryFlagUrl('SE'))->toEndWith('/vendor/filament-country-select/flags/SE.png')
         ->and($select->getCountries()['SE'])->toContain('<img')
         ->and($select->getCountries()['SE'])->not->toContain('<svg');
 });

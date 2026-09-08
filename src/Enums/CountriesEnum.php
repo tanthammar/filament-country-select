@@ -2,12 +2,10 @@
 
 namespace TantHammar\FilamentCountrySelect\Enums;
 
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
-/**
- * Every ISO 3166-1 alpha-2 country and territory, plus XK for Kosovo, which has no ISO code
- * of its own but is widely used.
- */
+/** ISO 3166-1 alpha-2, plus XK for Kosovo, which has no ISO code of its own. */
 enum CountriesEnum: string
 {
     case AF = 'AF';
@@ -257,22 +255,30 @@ enum CountriesEnum: string
     case ZW = 'ZW';
     case AX = 'AX';
 
-    /** The translated country name, in the current locale. */
     public function getLabel(): string
     {
-        return __('filament-country-select::countries.'.$this->value);
+        return $this->getName();
     }
 
-    /** The translated country name in a given locale, the current one when none is given. */
+    /** English is the last resort, whatever is configured. */
     public function getName(?string $locale = null): string
     {
-        return trans('filament-country-select::countries.'.$this->value, [], $locale);
+        $key = 'filament-country-select::countries.'.$this->value;
+
+        $locales = [$locale, config('filament-country-select.fallback-locale', 'en'), 'en'];
+
+        foreach ($locales as $try) {
+            $name = trans($key, [], $try);
+
+            if (is_string($name) && $name !== $key) {
+                return $name;
+            }
+        }
+
+        return $this->value;
     }
 
-    /**
-     * The international dialling code. Not unique: the United States and Canada share +1.
-     * Territories with no telephone service of their own are not listed at all.
-     */
+    /** Not unique: the United States and Canada share +1. */
     public function getDialCode(): string
     {
         return match ($this) {
@@ -778,10 +784,24 @@ enum CountriesEnum: string
     }
 
     /**
-     * The flag as regional indicator symbols, needing no image asset. Windows has no glyphs for
-     * these and renders the two letters instead.
+     * Flags must be published. Returns `<img>` tag.
      */
-    public function getFlag(): string
+    public function getFlag(string $class = 'h-5 w-6 shrink-0 object-contain'): HtmlString
+    {
+        return new HtmlString(
+            '<img src="'.e($this->getFlagUrl()).'" alt="" width="32" height="24" class="'.e($class).'" loading="lazy">'
+        );
+    }
+
+    public function getFlagUrl(): string
+    {
+        $path = trim((string) config('filament-country-select.flags-path'), '/');
+
+        return asset($path.'/'.$this->value.'.png');
+    }
+
+    /** Depending on the reader's system, this might render as the two letters instead of a flag. */
+    public function getEmojiFlag(): string
     {
         return collect(mb_str_split($this->value))
             ->map(fn (string $letter): string => mb_chr(0x1F1E6 + ord($letter) - ord('A')))
@@ -789,11 +809,8 @@ enum CountriesEnum: string
     }
 
     /**
-     * The country a name refers to, in any language this package ships, plus the alternative
-     * and former names in resources/aliases.php. An alpha-2 or alpha-3 code resolves too.
-     *
-     * Recognition is deliberately wider than display: a name is matched whatever locale the
-     * application is running in, because stored data rarely agrees with the current locale.
+     * Matched against every shipped language, not just the current locale. Alpha-2 and alpha-3
+     * codes, and the names in resources/aliases.php, resolve too.
      */
     public static function tryFromName(?string $name): ?self
     {
@@ -810,11 +827,7 @@ enum CountriesEnum: string
         return self::tryFrom(self::nameLookup()[Str::lower($name)] ?? '');
     }
 
-    /**
-     * Every name in every shipped language, and every alpha-3 code, pointing at its country.
-     *
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     protected static function nameLookup(): array
     {
         static $lookup = null;
@@ -836,11 +849,5 @@ enum CountriesEnum: string
         }
 
         return $lookup;
-    }
-
-    /** The lowercase code the flag svg files are named by. */
-    public function getFlagAlias(): string
-    {
-        return Str::lower($this->value);
     }
 }

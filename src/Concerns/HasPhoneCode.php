@@ -8,7 +8,7 @@ trait HasPhoneCode
 {
     protected bool|Closure $phone = false;
 
-    /** Append the international dialling code to each country. */
+    /** Append the dialling code to each option label. */
     public function phone(bool|Closure $phone = true): static
     {
         $this->phone = $phone;

@@ -8,11 +8,6 @@ use TantHammar\FilamentCountrySelect\Concerns\HasCountryList;
 use TantHammar\FilamentCountrySelect\Concerns\HasCountryOptions;
 use TantHammar\FilamentCountrySelect\Concerns\HasPhoneCode;
 
-/**
- * Flags are deliberately not offered here. SelectFilter builds its own inner Select and never
- * allows html on it, so an <img> would show as markup, and a method that quietly does nothing
- * is worse than one that is not there.
- */
 class CountrySelectFilter extends SelectFilter
 {
     use HasCountryData;

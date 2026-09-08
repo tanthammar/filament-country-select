@@ -21,10 +21,8 @@ class FilamentCountrySelectServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        // The flags are served as files rather than inlined, because inlining every flag into
-        // every option puts the whole 3.4 MB flag library into the page, once per select.
         $this->publishes([
-            __DIR__.'/../resources/svg' => public_path('vendor/'.static::$name.'/flags'),
+            __DIR__.'/../resources/flags' => public_path('vendor/'.static::$name.'/flags'),
         ], static::$name.'-flags');
 
         FilamentAsset::register([

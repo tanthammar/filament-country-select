@@ -73,12 +73,14 @@ CountryColumn::make('country_code')->showFlags();
 
 Until a flag is asked for the select is an ordinary key value select — an option is just the country's name, so
 Filament escapes and renders it like any other. Markup is only produced to draw a flag, which keeps the whole
-246 country option list at about 3.5 KB.
+246 country option list at about 2 KB.
 
-Flags are published as files and referenced with an `<img>` on purpose. Inlining an SVG into every option puts the
-whole flag library into the page: 3.4 MB per select, 1.1 MB even gzipped, and a form with four country selects
-ships four copies. As files the browser fetches only the flags it actually paints, and caches them across every
-page. Base64 data URIs are worse still — a third larger, they compress badly, and they cannot be cached at all.
+Flags are 32×24 PNGs, about 1 KB each and 272 KB for all 246.
+
+They are published as files and referenced with an `<img>` on purpose. Inlining a flag into every option puts the
+whole flag library into the page, once per select, and a form with four country selects ships four copies. As
+files the browser fetches only the flags it actually paints, and caches them across every page. Base64 data URIs
+are worse still — a third larger, they compress badly, and they cannot be cached at all.
 
 Publishing them elsewhere is a config change:
 
@@ -86,6 +88,14 @@ Publishing them elsewhere is a config change:
 // config/filament-country-select.php
 'flags-path' => 'vendor/filament-country-select/flags',
 ```
+
+### Other flags
+
+[stefangabos/world_countries](https://stefangabos.github.io/world_countries) ships the same flags in other sizes
+and designs, flat and waving, from 16×16 up to 128×128. To use one of those instead, download the set, rename
+every file to an uppercase country code (`se.png` becomes `SE.png`), and put them where `flags-path` points.
+
+Any format an `<img>` can show works, an SVG set included, as long as the file names match.
 
 ## Shaping the list
 
@@ -110,7 +120,7 @@ CountrySelect::make('country_code')
     ->only(fn (): array => auth()->user()->team->market_codes);
 ```
 
-### There is no map()
+### Storing a different code
 
 The stored value is always the ISO code. A form that has to read or write something else — a legacy column
 holding `UK`, an API that wants its own codes — can say so where it happens, with Filament's own methods:
@@ -199,13 +209,33 @@ $country->getLabel();       // 'Sverige'   the name in the current locale
 $country->getName('es');    // 'Suecia'    the name in a given locale
 $country->getDialCode();    // '+46'
 $country->getAlpha3();      // 'SWE'
-$country->getFlag();        // '🇸🇪'       regional indicator symbols, no asset needed
-$country->getFlagAlias();   // 'se'        the svg the Filament components render
+$country->getFlag();        // '<img src="/vendor/.../SE.png" …>'  as an Htmlable
+$country->getFlagUrl();     // '/vendor/filament-country-select/flags/SE.png'
+$country->getEmojiFlag();   // '🇸🇪'
 $country->value;            // 'SE'
 ```
 
-`getFlag()` is for places an image cannot go — mail, notifications, exports, plain text. The Filament components
-use the published SVG files instead, which also render on Windows, where flag emoji have no glyphs at all.
+`getFlag()` shows a flag outside a Filament component, in your own blade, with no view to render:
+
+```blade
+{{ $country->getFlag() }}
+{{ $country->getFlag('h-4 w-5 rounded') }}
+```
+
+It returns an `HtmlString`, so `{{ }}` renders it rather than escaping it, and it needs the flags to have been
+[published](#flags).
+
+On a component, `getCountryLabel()` and `getCountryFlagUrl()` do the same for a stored value, and return `null`
+rather than throwing for an [added entry](#shaping-the-list) that is not a country:
+
+```php
+$select->getCountryLabel('SE');     // 'Sverige'
+$select->getCountryFlagUrl('SE');   // '/vendor/.../SE.png'
+$select->getCountryFlagUrl('XX');   // null
+```
+
+`getEmojiFlag()` is for places an image cannot go — a plain text mail, a CSV. Whether it draws as a flag or as the
+two letters depends on the reader's system: Windows ships no flag emoji unless one has been installed.
 
 ### Resolving a country from a name
 
@@ -242,6 +272,9 @@ return [
 
     // Where the flags were published to, relative to the public directory.
     'flags-path' => 'vendor/filament-country-select/flags',
+
+    // The language to name a country in when the current locale has no translation here.
+    'fallback-locale' => 'en',
 ];
 ```
 
@@ -251,9 +284,10 @@ Country names ship in 38 languages and are resolved through Laravel's translator
 locale. The names are the common short forms rather than the ISO official ones — `United Kingdom`, not
 `United Kingdom of Great Britain and Northern Ireland`; `Taiwan`, not `Taiwan, Province of China`.
 
-Which language is used follows `app()->getLocale()`, because the names are ordinary translation keys. A locale the
-package does not ship falls back to `config('app.fallback_locale')`, and then to English, so a country is always
-named and a translation key never leaks into the page.
+Which language is used follows `app()->getLocale()`, because the names are ordinary translation keys. A locale
+this package does not ship falls back to `filament-country-select.fallback-locale`, and then to **English** — not
+to the application's own fallback locale, which may well be a language this package does not ship either. A
+country is always named, and a translation key never reaches the page.
 
 ```php
 app()->setLocale('de');  CountriesEnum::SE->getLabel();  // 'Schweden'
@@ -286,15 +320,15 @@ round trip, so the package is built to make that cheap.
 
 | per select, 246 countries | time | options html |
 | --- | --- | --- |
-| default | 1.3 ms | 3.5 KB |
-| `->showFlags()->phone()` | 2.3 ms | 60 KB |
+| default | 1.0 ms | 2.3 KB |
+| `->showFlags()->phone()` | 1.9 ms | 60 KB |
 
 What that rests on:
 
 - **No blade anywhere.** Options are built as strings, and `CountryColumn` renders through `HasEmbeddedView`, the
   way Filament's own `ColorColumn` does. Rendering a view per country, per select, cost more than everything else
   in the package put together.
-- **Flags are files, not markup.** Inlining an SVG per option put the whole 3.4 MB flag library in the page, once
+- **Flags are files, not markup.** Inlining a flag per option put the whole flag library in the page, once
   per select. See [Flags](#flags).
 - **Markup only when it is needed.** Without flags an option is just the country's name, so the select is an
   ordinary key value select and Filament escapes it as usual.
@@ -341,13 +375,11 @@ A published language is used for display like any other. `tryFromName()` reads t
 a language there widens what the select displays, not what it recognises.
 
 ## Credits
+Country names come from [umpirsky/country-list](https://github.com/umpirsky/country-list) (CLDR). Country codes
+from [stefangabos/world_countries](https://github.com/stefangabos/world_countries). Flags too, from their
+[flat 32x24 set](https://github.com/stefangabos/world_countries/tree/master/data/flags/flat/32x24).
 
-Derived from [tapp/filament-country-code-field](https://github.com/TappNetwork/filament-country-code-field) by
-Tapp Network. Rewritten to key on ISO codes, to separate countries that share a dialling code, and to add
-translations.
-
-Country names come from [umpirsky/country-list](https://github.com/umpirsky/country-list) (CLDR), ISO codes from
-[stefangabos/world_countries](https://github.com/stefangabos/world_countries).
+Dialling codes are maintained by hand: neither source ships them.
 
 ## License
 
