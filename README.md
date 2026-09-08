@@ -130,10 +130,15 @@ application disagree about what a country code is.
 stores the ISO code:
 
 ```php
-CountrySelect::make('country_code')->phone();   // shows "🇸🇪 Sverige +46", stores "SE"
+CountrySelect::make('country_code')->phone();               // shows "Sverige +46", stores "SE"
+CountrySelect::make('country_code')->phone()->showFlags();  // shows "🇸🇪 Sverige +46", stores "SE"
 ```
 
-Searching then matches the dialling code as well as the name, so typing `46` finds Sweden.
+Country names are searchable either way. The dialling code is only searchable once `->phone()` is on, because
+matching a code that is not on screen would be baffling.
+
+The code is matched anywhere in it, so `46` finds Sweden `+46`, but also Barbados `+1-246` and the British Indian
+Ocean Territory `+246`. Typing the `+` narrows it: `+46` finds Sweden alone.
 
 It takes a closure, like any Filament configuration method:
 
