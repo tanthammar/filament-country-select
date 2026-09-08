@@ -1,7 +1,7 @@
-# Filament Country Select
+# Filament Country and Dialling Code Select, Table Column and Filter
 
-A country select form field, table column and table filter for [Filament](https://filamentphp.com), with flags,
-translated country names, and optional international dialling codes.
+For [Filament](https://filamentphp.com). 246 countries, named in 38 languages, with optional flags and optional
+international dialling codes for building a phone number input.
 
 The value is always the **ISO 3166-1 alpha-2 country code** (`SE`, `US`, `CA`), never the dialling code. A dialling
 code does not identify a country — the United States and Canada share `+1`, Russia and Kazakhstan share `+7` — so
@@ -27,18 +27,22 @@ php artisan vendor:publish --tag="filament-country-select-translations"
 ```php
 use TantHammar\FilamentCountrySelect\Forms\Components\CountrySelect;
 
-CountrySelect::make('country_code');
+CountrySelect::make('country_code');                // Sverige
+CountrySelect::make('country_code')->phone();       // Sverige +46
+CountrySelect::make('country_code')->showFlags();   // 🇸🇪 Sverige
 ```
 
-Stores `SE`, shows `Sverige`.
+Each of them stores `SE`. The dialling code and the flag change what the option looks like, never what is saved —
+see [Dialling codes](#dialling-codes) for building a phone number field out of that.
 
 ### Table column
 
 ```php
 use TantHammar\FilamentCountrySelect\Tables\Columns\CountryColumn;
 
-CountryColumn::make('country_code');          // 🇸🇪 Sverige
-CountryColumn::make('country_code')->phone(); // 🇸🇪 Sverige +46
+CountryColumn::make('country_code');                // Sverige
+CountryColumn::make('country_code')->phone();       // Sverige +46
+CountryColumn::make('country_code')->showFlags();   // 🇸🇪 Sverige
 ```
 
 ### Table filter
@@ -49,7 +53,8 @@ use TantHammar\FilamentCountrySelect\Tables\Filters\CountrySelectFilter;
 CountrySelectFilter::make('country_code');
 ```
 
-`->phone()` works here too. A filter renders plain text, so it never shows a flag.
+`->phone()` works here too. A filter has no `showFlags()`: `SelectFilter` builds its own inner `Select` and never
+allows html on it, so a flag could only ever render as markup.
 
 ## Flags
 
@@ -192,8 +197,8 @@ $country->getFlagAlias();   // 'se'        the svg the Filament components rende
 $country->value;            // 'SE'
 ```
 
-`getFlag()` is for places a Blade icon cannot go — mail, notifications, exports, plain text. The Filament
-components use the bundled SVGs instead, which also render on Windows, where flag emoji have no glyphs.
+`getFlag()` is for places an image cannot go — mail, notifications, exports, plain text. The Filament components
+use the published SVG files instead, which also render on Windows, where flag emoji have no glyphs at all.
 
 ### Resolving a country from a name
 
@@ -225,7 +230,11 @@ a region was mapped onto one.
 ```php
 // config/filament-country-select.php
 return [
-    'options-limit' => 100,   // how many options the select renders before searching
+    // How many options the select renders before the user has to search.
+    'options-limit' => 100,
+
+    // Where the flags were published to, relative to the public directory.
+    'flags-path' => 'vendor/filament-country-select/flags',
 ];
 ```
 
@@ -235,6 +244,26 @@ Country names ship in 38 languages and are resolved through Laravel's translator
 locale. The names are the common short forms rather than the ISO official ones — `United Kingdom`, not
 `United Kingdom of Great Britain and Northern Ireland`; `Taiwan`, not `Taiwan, Province of China`.
 
+Which language is used follows `app()->getLocale()`, because the names are ordinary translation keys. A locale the
+package does not ship falls back to `config('app.fallback_locale')`, and then to English, so a country is always
+named and a translation key never leaks into the page.
+
+```php
+app()->setLocale('de');  CountriesEnum::SE->getLabel();  // 'Schweden'
+app()->setLocale('ja');  CountriesEnum::SE->getLabel();  // 'スウェーデン'
+app()->setLocale('vi');  CountriesEnum::SE->getLabel();  // 'Sweden'   not shipped, falls back
+```
+
+`getName('es')` asks for one language directly, whatever the application locale is.
+
+**Recognition does not follow the locale.** `tryFromName()` searches every shipped language at once, so a Japanese
+country name is resolved while the application runs in Swedish. Stored data rarely agrees with the current locale:
+
+```php
+app()->setLocale('sv');
+CountriesEnum::tryFromName('スウェーデン');   // SE
+```
+
 A test walks `resources/lang` and fails if a language is missing any country, so a language cannot ship half done.
 
 Publish them to change any of it:
@@ -243,11 +272,66 @@ Publish them to change any of it:
 php artisan vendor:publish --tag="filament-country-select-translations"
 ```
 
+## Render time
+
+A country select carries 246 options, and a form often carries several of them. Livewire rebuilds them on every
+round trip, so the package is built to make that cheap.
+
+| per select, 246 countries | time | options html |
+| --- | --- | --- |
+| default | 1.3 ms | 3.5 KB |
+| `->showFlags()->phone()` | 2.3 ms | 60 KB |
+
+What that rests on:
+
+- **No blade anywhere.** Options are built as strings, and `CountryColumn` renders through `HasEmbeddedView`, the
+  way Filament's own `ColorColumn` does. Rendering a view per country, per select, cost more than everything else
+  in the package put together.
+- **Flags are files, not markup.** Inlining an SVG per option put the whole 3.4 MB flag library in the page, once
+  per select. See [Flags](#flags).
+- **Markup only when it is needed.** Without flags an option is just the country's name, so the select is an
+  ordinary key value select and Filament escapes it as usual.
+- **Closures are evaluated once per list**, not once per country. `showFlags()` and `phone()` both accept
+  closures, and Filament's parameter injection is not something to run 246 times. They are read again on the next
+  build, so a closure that depends on other form state still keeps up.
+- **Countries are looked up, not scanned for.** A table column asks for the same country once per row.
+- **The selected option is built on its own**, rather than read out of a freshly built list of all 246.
+
+Tests pin the results rather than the intentions: options must stay small, must never contain an inlined `<svg>`
+or a `data:` uri, and the default must render as plain text.
+
 ## Testing
 
 ```bash
 composer test
 ```
+
+## Supported languages
+
+38 languages, each complete for all 246 countries. Names are the common short forms, from
+[CLDR](https://cldr.unicode.org).
+
+| | | | |
+| --- | --- | --- | --- |
+| `ar` Arabic | `bg` Bulgarian | `br` Breton | `cs` Czech |
+| `da` Danish | `de` German | `el` Greek | `en` English |
+| `eo` Esperanto | `es` Spanish | `et` Estonian | `eu` Basque |
+| `fa` Persian | `fi` Finnish | `fr` French | `hr` Croatian |
+| `hu` Hungarian | `hy` Armenian | `it` Italian | `ja` Japanese |
+| `ko` Korean | `lt` Lithuanian | `nl` Dutch | `no` Norwegian |
+| `pl` Polish | `pt` Portuguese | `pt_BR` Portuguese (Brazil) | `ro` Romanian |
+| `ru` Russian | `sk` Slovak | `sl` Slovenian | `sr` Serbian |
+| `sv` Swedish | `th` Thai | `tr` Turkish | `uk` Ukrainian |
+| `zh` Chinese (Simplified) | `zh_TW` Chinese (Traditional) | | |
+
+Publish them to change a name, or add a language of your own:
+
+```bash
+php artisan vendor:publish --tag="filament-country-select-translations"
+```
+
+A published language is used for display like any other. `tryFromName()` reads the package's own files, so adding
+a language there widens what the select displays, not what it recognises.
 
 ## Credits
 
