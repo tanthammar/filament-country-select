@@ -268,7 +268,7 @@ enum CountriesEnum: string
         $locales = [$locale, config('filament-country-select.fallback-locale', 'en'), 'en'];
 
         foreach ($locales as $try) {
-            $name = trans($key, [], $try);
+            $name = app('translator')->get($key, [], $try, false);
 
             if (is_string($name) && $name !== $key) {
                 return $name;

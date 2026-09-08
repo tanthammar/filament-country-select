@@ -20,13 +20,12 @@ class CountrySelectFilter extends SelectFilter
         parent::setUp();
 
         $this->native(false);
-        $this->optionsLimit(config('filament-country-select.options-limit'));
+        $this->optionsLimit(config('filament-country-select.options-limit') ?? 50);
 
         $this->searchable();
 
-        $this->getSearchResultsUsing(fn (string $search): array => $this->buildOptions(array_filter(
-            $this->getCountriesData(),
-            fn (array $country): bool => stripos($country['label'], $search) !== false
-        )));
+        $this->getSearchResultsUsing(fn (string $search): array => $this->buildOptions(
+            $this->matching($search)
+        ));
     }
 }

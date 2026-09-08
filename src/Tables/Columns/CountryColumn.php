@@ -2,6 +2,7 @@
 
 namespace TantHammar\FilamentCountrySelect\Tables\Columns;
 
+use BackedEnum;
 use Filament\Support\Components\Contracts\HasEmbeddedView;
 use Filament\Support\Concerns\CanWrap;
 use Filament\Support\Enums\Alignment;
@@ -25,6 +26,7 @@ class CountryColumn extends Column implements HasEmbeddedView
     public function toEmbeddedHtml(): string
     {
         $state = $this->getState();
+        $state = $state instanceof BackedEnum ? $state->value : $state;
         $alignment = $this->getAlignment();
 
         $attributes = $this->getExtraAttributeBag()

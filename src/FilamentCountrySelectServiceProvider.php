@@ -2,8 +2,6 @@
 
 namespace TantHammar\FilamentCountrySelect;
 
-use Filament\Support\Assets\Css;
-use Filament\Support\Facades\FilamentAsset;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -24,9 +22,5 @@ class FilamentCountrySelectServiceProvider extends PackageServiceProvider
         $this->publishes([
             __DIR__.'/../resources/flags' => public_path('vendor/'.static::$name.'/flags'),
         ], static::$name.'-flags');
-
-        FilamentAsset::register([
-            Css::make('country-select', __DIR__.'/../dist/country-select.css'),
-        ], static::$name);
     }
 }

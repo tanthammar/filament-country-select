@@ -44,3 +44,17 @@ it('resolves a country label from an iso code', function () {
         ->and($select->getCountryLabel('nope'))->toBeNull()
         ->and($select->phone()->getCountryLabel('SE'))->toBe('Sweden +46');
 });
+
+it('searches case insensitively in a non latin alphabet', function () {
+    app()->setLocale('el');
+
+    $select = CountrySelect::make('country_code');
+
+    expect($select->getSearchResults('ελλάδα'))->toBe(['GR' => 'Ελλάδα'])
+        ->and($select->getSearchResults('Ελλάδα'))->toBe(['GR' => 'Ελλάδα']);
+});
+
+it('searches the dialling code when it shows one', function () {
+    expect(CountrySelect::make('country_code')->phone()->getSearchResults('+46'))->toBe(['SE' => 'Sweden +46'])
+        ->and(CountrySelect::make('country_code')->getSearchResults('+46'))->toBe([]);
+});

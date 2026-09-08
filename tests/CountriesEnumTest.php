@@ -114,3 +114,11 @@ it('still uses a language it does ship', function () {
     expect(CountriesEnum::SE->getLabel())->toBe('Schweden')
         ->and(CountriesEnum::SE->getName('ja'))->toBe('スウェーデン');
 });
+
+it('falls back to its own language, not the application one', function () {
+    config()->set('app.fallback_locale', 'de');
+    config()->set('filament-country-select.fallback-locale', 'en');
+    app()->setLocale('vi');
+
+    expect(CountriesEnum::SE->getLabel())->toBe('Sweden');
+});

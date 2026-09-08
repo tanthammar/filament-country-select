@@ -1,6 +1,7 @@
 <?php
 
 use Filament\Support\Components\Contracts\HasEmbeddedView;
+use TantHammar\FilamentCountrySelect\Enums\CountriesEnum;
 use TantHammar\FilamentCountrySelect\Forms\Components\CountrySelect;
 use TantHammar\FilamentCountrySelect\Tables\Columns\CountryColumn;
 use TantHammar\FilamentCountrySelect\Tables\Filters\CountrySelectFilter;
@@ -92,4 +93,17 @@ it('renders the column without the blade engine', function () {
 
     expect($column)->toBeInstanceOf(HasEmbeddedView::class)
         ->and(method_exists($column, 'toEmbeddedHtml'))->toBeTrue();
+});
+
+it('resolves an added entry keyed in lower case', function () {
+    $filter = CountrySelectFilter::make('country_code')->only(['SE'])->add(['xx' => 'Other']);
+
+    expect($filter->getCountries())->toBe(['SE' => 'Sweden', 'xx' => 'Other'])
+        ->and($filter->getCountryLabel('xx'))->toBe('Other');
+});
+
+it('resolves a country from a backed enum', function () {
+    $column = CountryColumn::make('country_code');
+
+    expect($column->getCountryLabel(CountriesEnum::SE))->toBe('Sweden');
 });

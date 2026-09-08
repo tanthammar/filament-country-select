@@ -23,7 +23,7 @@ class CountrySelect extends Select
 
         $this->native(false);
         $this->allowHtml(fn (): bool => $this->getShowFlags());
-        $this->optionsLimit(config('filament-country-select.options-limit'));
+        $this->optionsLimit(config('filament-country-select.options-limit') ?? 50);
 
         $this->searchable();
 
@@ -38,24 +38,14 @@ class CountrySelect extends Select
                 ? null
                 : $this->buildOptions([$country])[$country['key']] ?? null;
         });
+
+        $this->getOptionLabelsUsing(fn (array $values): array => $this->buildOptions(
+            array_filter(array_map($this->getCountry(...), $values))
+        ));
     }
 
     protected function rendersHtmlOptions(): bool
     {
         return $this->getShowFlags();
-    }
-
-    /**
-     * @return array<int, array{key: string, iso_code: ?string, label: string, dial_code: ?string}>
-     */
-    protected function matching(string $search): array
-    {
-        $searchesDialCodes = $this->wantsDialCode();
-
-        return array_filter(
-            $this->getCountriesData(),
-            fn (array $country): bool => stripos($country['label'], $search) !== false
-                || ($searchesDialCodes && $country['dial_code'] !== null && str_contains($country['dial_code'], $search))
-        );
     }
 }
