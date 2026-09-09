@@ -6,7 +6,6 @@ international dialling codes for building a phone number input.
 The Country Select returns the **ISO 3166-1 alpha-2 country code** (`SE`, `US`, `CA`).
 The package has helpers to resolve the dialling code from a country code — see
 [Dialling codes](#dialling-codes).
-The `->phone()` feature simply adds the dialling code to the select's option label.
 
 
 ## Installation
@@ -22,41 +21,70 @@ php artisan vendor:publish --tag="filament-country-select-config"
 php artisan vendor:publish --tag="filament-country-select-translations"
 ```
 
-## Usage
+Publish the flags if you want to show them in the select
 
-### Form field
+```bash
+php artisan vendor:publish --tag="filament-country-select-flags"
+```
+
+# Usage
+
+## Form field
 
 ```php
 use TantHammar\FilamentCountrySelect\Forms\Components\CountrySelect;
 
-CountrySelect::make('country_code');                // Sverige
-CountrySelect::make('country_code')->phone();       // Sverige +46
-CountrySelect::make('country_code')->showFlags();   // 🇸🇪 Sverige
+CountrySelect::make('country_code');                // Sweden
+CountrySelect::make('country_code')->phone();       // Sweden +46
+CountrySelect::make('country_code')->showFlags();   // 🇸🇪 Sweden
 ```
 
-Each of them stores `SE`. The dialling code and the flag change what the option looks like, never what is saved —
-see [Dialling codes](#dialling-codes) for building a phone number field out of that.
+The selected `$state` is the country code (`SE`, `US`, `CA`). The phone and the flag options only changes the label —
+see [Dialling codes](#dialling-codes).
 
-### Table column
+### Options
+
+`only()`, `exclude()` and `add()` work on the select, the column and the filter alike, and each takes an array or
+a closure.
+
+```php
+CountrySelect::make('country_code')
+    ->only(['SE', 'NO', 'DK', 'FI'])
+    ->exclude(['FI'])
+    ->add(['XX' => 'Other']);
+```
+
+`only()` and `exclude()` combine, so excluding narrows what `only()` states. 
+Codes are matched case insensitively.
+
+`add()` is for a value that is not a country code — an "Other" option, a "Not stated". Such an entry carries no flag
+and no dialling code, and `tryFromName()` **will return null !!!**.
+
+```php
+CountrySelect::make('country_code')
+    ->only(fn (): array => auth()->user()->team->market_codes);
+```
+
+## Table column
 
 ```php
 use TantHammar\FilamentCountrySelect\Tables\Columns\CountryColumn;
 
-CountryColumn::make('country_code');                // Sverige
-CountryColumn::make('country_code')->phone();       // Sverige +46
-CountryColumn::make('country_code')->showFlags();   // 🇸🇪 Sverige
+CountryColumn::make('country_code');                // Sweden
+CountryColumn::make('country_code')->phone();       // Sweden +46
+CountryColumn::make('country_code')->showFlags();   // 🇸🇪 Sweden
 ```
 
-### Table filter
+## Table filter
 
 ```php
 use TantHammar\FilamentCountrySelect\Tables\Filters\CountrySelectFilter;
 
-CountrySelectFilter::make('country_code');
+CountrySelectFilter::make('country_code');              //search by country name only
+CountrySelectFilter::make('country_code')->phone();     //search by dialling code and country name
 ```
 
-`->phone()` works here too. A filter has no `showFlags()`: `SelectFilter` builds its own inner `Select` and never
-allows html on it, so a flag could only ever render as markup.
+`->phone()` activates search by dialling code and country name. A filter has no `showFlags()`
 
 ## Flags
 
@@ -71,98 +99,51 @@ CountrySelect::make('country_code')->showFlags();
 CountryColumn::make('country_code')->showFlags();
 ```
 
-Until a flag is asked for the select is an ordinary key value select — an option is just the country's name, so
-Filament escapes and renders it like any other. Markup is only produced to draw a flag, which keeps the whole
-246 country option list at about 2 KB.
+### Very small and fast even with rendered flags
 
-Flags are 32×24 PNGs, about 1 KB each and 272 KB for all 246.
+Without `->showFlags()` the selects options is a plain `[key => label]` array.
 
-They are published as files and referenced with an `<img>` on purpose. Inlining a flag into every option puts the
-whole flag library into the page, once per select, and a form with four country selects ships four copies. As
-files the browser fetches only the flags it actually paints, and caches them across every page. Base64 data URIs
-are worse still — a third larger, they compress badly, and they cannot be cached at all.
+Flags are 32×24 PNGs, about 1 KB each and **_only 272 KB for all flags_**.
 
-Publishing them elsewhere is a config change:
+Inlining a flag into every option puts the whole flag library into the page. 
+The flags are added to the page once for each input in a form. Consider this if used in a repeater. 
+Once fetched, the browser caches them across every page.
+
+Even when flags are enabled, the blade renderer is never used, which saves loads of time.
+
+
+### Change where flags are published
 
 ```php
 // config/filament-country-select.php
 'flags-path' => 'vendor/filament-country-select/flags',
 ```
 
-### Other flags
+### Change flag styling
 
 [stefangabos/world_countries](https://stefangabos.github.io/world_countries) ships the same flags in other sizes
-and designs, flat and waving, from 16×16 up to 128×128. To use one of those instead, download the set, rename
-every file to an uppercase country code (`se.png` becomes `SE.png`), and put them where `flags-path` points.
+and designs, flat and waving. To use one of those instead, download the set, rename
+every file to an uppercase country code (`se.png` becomes `SE.png`), and put them where config `flags-path` points.
 
-Any format an `<img>` can show works, an SVG set included, as long as the file names match.
-
-## Shaping the list
-
-`only()`, `exclude()` and `add()` work on the select, the column and the filter alike, and each takes an array or
-a closure.
-
-```php
-CountrySelect::make('country_code')
-    ->only(['SE', 'NO', 'DK', 'FI'])          // just these, in the order the package lists them
-    ->exclude(['FI'])                          // everything but these
-    ->add(['XX' => 'Other']);                  // entries of your own, after the countries
-```
-
-`only()` and `exclude()` combine, so excluding narrows what `only()` offered. Codes are matched case
-insensitively.
-
-`add()` is for a value that is not a country — an "Other" option, a "Not stated". Such an entry carries no flag
-and no dialling code, and `tryFromName()` will never return one, because it is not in the country list.
-
-```php
-CountrySelect::make('country_code')
-    ->only(fn (): array => auth()->user()->team->market_codes);
-```
-
-### Storing a different code
-
-The stored value is always the ISO code. A form that has to read or write something else — a legacy column
-holding `UK`, an API that wants its own codes — can say so where it happens, with Filament's own methods:
-
-```php
-CountrySelect::make('country')
-    ->formatStateUsing(fn (?string $state): ?string => $state === 'UK' ? 'GB' : $state)
-    ->dehydrateStateUsing(fn (?string $state): ?string => $state === 'GB' ? 'UK' : $state);
-```
-
-That keeps the exception at the one call site that needs it, instead of letting every component in the
-application disagree about what a country code is.
+Use any format that `<img src"...">` supports, as long as the file names match.
 
 ## Dialling codes
 
-`->phone()` adds the international dialling code to every option label. It changes the label only — the field still
-stores the ISO code:
+`->phone()` 
+- Adds the international dialling code to the option label. 
+- It changes the label only — the field still stores the ISO code:
+- Enables search with dialling code (or country name)
+- It takes a closure
 
 ```php
-CountrySelect::make('country_code')->phone();               // shows "Sverige +46", stores "SE"
-CountrySelect::make('country_code')->phone()->showFlags();  // shows "🇸🇪 Sverige +46", stores "SE"
+CountrySelect::make('country_code')->phone();               // label: "Sweden +46", stores: "SE"
+CountrySelect::make('country_code')->phone()->showFlags();  // label: "🇸🇪 Sweden +46", stores: "SE"
+CountrySelect::make('country_code')->phone(fn (Get $get): bool => $get('type') === 'phone'); //example closure
 ```
 
-Country names are searchable either way. The dialling code is only searchable once `->phone()` is on, because
-matching a code that is not on screen would be baffling.
+The search is `%{$searchTerm}%`, so `46` finds Sweden and other countries. Typing `+46` finds Sweden alone.
 
-The code is matched anywhere in it, so `46` finds Sweden `+46`, but also Barbados `+1-246` and the British Indian
-Ocean Territory `+246`. Typing the `+` narrows it: `+46` finds Sweden alone.
-
-It takes a closure, like any Filament configuration method:
-
-```php
-use Filament\Schemas\Components\Utilities\Get;
-
-CountrySelect::make('country_code')->phone(fn (Get $get): bool => $get('type') === 'phone');
-```
-
-### Why the value stays the ISO code
-
-A dialling code does not identify a country. `+1` is the United States *and* Canada, `+7` is Russia *and*
-Kazakhstan. Storing `+1` loses which one the user picked, and libphonenumber needs a region code, not a dialling
-code, to format or validate a number. So the ISO code is stored and the dialling code is derived from it:
+### Get dialling code from country code
 
 ```php
 use TantHammar\FilamentCountrySelect\Enums\CountriesEnum;
@@ -171,10 +152,14 @@ CountriesEnum::from('SE')->getDialCode();   // '+46'
 ```
 
 ### Building a phone number field
+Dialling codes are not unique, like +1 is both US and CA, +7 both RU and KZ...
+So, if you want to build a phone input and store the dialling code, you need a country code select which controls the stored value. 
+Trying to populate the country code select from a stored dial code would select first found, which could be another country than intended.
 
-Fuse the select with a number input and combine the two on save:
+Observe that you have to add your preferred validation, this is just an example,
 
 ```php
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\FusedGroup;
 use Filament\Schemas\Components\Utilities\Get;
@@ -184,16 +169,18 @@ use TantHammar\FilamentCountrySelect\Forms\Components\CountrySelect;
 FusedGroup::make([
     CountrySelect::make('country_code')
         ->phone()
-        ->default('SE')
-        ->live()
-        ->dehydrated(false)
+        ->required()
         ->columnSpan(1),
-    TextInput::make('phone')
+
+    Hidden::make('dial_code')
+        ->dehydrateStateUsing(
+            fn (Get $get): string => CountriesEnum::from($get('country_code'))->getDialCode()
+        ),
+
+    TextInput::make('local_phone')
         ->tel()
-        ->columnSpan(2)
-        ->dehydrateStateUsing(fn (Get $get, ?string $state): ?string => filled($state)
-            ? CountriesEnum::from($get('country_code'))->getDialCode().ltrim($state, '0')
-            : null),
+        ->required()
+        ->columnSpan(2),
 ])->columns(3);
 ```
 
@@ -203,8 +190,7 @@ FusedGroup::make([
 
 ### Store country name based on selected country code
 
-Once the code is validated, another field can be filled from it on save. 
-By default it returns the country name in current app locale but you can optionally pass the translation you want.
+`->getName()` returns the country name in current app locale but you can pass the translation you want.
 
 Example to get the country name in English from the selected country code.
 
@@ -220,22 +206,18 @@ Hidden::make('country')
     ->getName('en')), //return country name in given translation, leave blank for current locale
 ```
 
-A visible `TextInput` fills the same way. Making `country_code` required and valid is what keeps `from()` safe
-here, and that is yours to do.
+## Countries Enum
 
-## The countries
-
-`CountriesEnum` is the whole country list, usable on its own. It backs every ISO 3166-1 alpha-2 country plus `XK`
-for Kosovo, which has no ISO code but is widely used, and leaves out the four territories with no telephone
-service of their own, so a dialling code is never null.
+`CountriesEnum` is the entire country list, usable on its own. It backs every ISO 3166-1 alpha-2 country plus `XK`
+for Kosovo, which has no ISO code. The list only contains countries that have a dialling code.
 
 ```php
 use TantHammar\FilamentCountrySelect\Enums\CountriesEnum;
 
 $country = CountriesEnum::from('SE');
 
-$country->getLabel();       // 'Sverige'   the name in the current locale
-$country->getName('es');    // 'Suecia'    the name in a given locale
+$country->getLabel();       // 'Sweden'   the name in the current locale
+$country->getName('sv');    // 'Sverige'  the name in a given locale
 $country->getDialCode();    // '+46'
 $country->getAlpha3();      // 'SWE'
 $country->getFlag();        // '<img src="/vendor/.../SE.png" …>'  as an Htmlable
@@ -244,7 +226,9 @@ $country->getEmojiFlag();   // '🇸🇪'
 $country->value;            // 'SE'
 ```
 
-`getFlag()` shows a flag outside a Filament component, in your own blade, with no view to render:
+### `getFlag()` 
+
+Shows a flag outside a Filament component, in your own blade, with no view to render:
 
 ```blade
 {{ $country->getFlag() }}
