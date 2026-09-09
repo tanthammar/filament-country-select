@@ -2,6 +2,7 @@
 
 namespace TantHammar\FilamentCountrySelect\Enums;
 
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
@@ -268,7 +269,7 @@ enum CountriesEnum: string
         $locales = [$locale, config('filament-country-select.fallback-locale', 'en'), 'en'];
 
         foreach ($locales as $try) {
-            $name = app('translator')->get($key, [], $try, false);
+            $name = Lang::get($key, [], $try, false);
 
             if (is_string($name) && $name !== $key) {
                 return $name;
@@ -376,7 +377,7 @@ enum CountriesEnum: string
             self::GW => '+245',
             self::GY => '+592',
             self::HT => '+509',
-            self::VA => '+379',
+            self::VA => '+39',
             self::HN => '+504',
             self::HK => '+852',
             self::HU => '+36',

@@ -76,7 +76,7 @@ trait HasCountryData
             return null;
         }
 
-        return $this->wantsDialCode() && $country['dial_code'] !== null
+        return $this->getPhone() && $country['dial_code'] !== null
             ? $country['label'].' '.$country['dial_code']
             : $country['label'];
     }
@@ -94,17 +94,12 @@ trait HasCountryData
      */
     protected function matching(string $search): array
     {
-        $searchesDialCodes = $this->wantsDialCode();
+        $searchesDialCodes = $this->getPhone();
 
         return array_filter(
             $this->getCountriesData(),
             fn (array $country): bool => mb_stripos($country['label'], $search) !== false
                 || ($searchesDialCodes && $country['dial_code'] !== null && str_contains($country['dial_code'], $search))
         );
-    }
-
-    protected function wantsDialCode(): bool
-    {
-        return $this->getPhone();
     }
 }

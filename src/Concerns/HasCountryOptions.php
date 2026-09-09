@@ -24,7 +24,7 @@ trait HasCountryOptions
      */
     public function buildOptions(iterable $countries): array
     {
-        $withDialCode = $this->wantsDialCode();
+        $withDialCode = $this->getPhone();
         $asHtml = $this->rendersHtmlOptions();
 
         $options = [];

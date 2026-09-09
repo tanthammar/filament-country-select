@@ -122,3 +122,8 @@ it('falls back to its own language, not the application one', function () {
 
     expect(CountriesEnum::SE->getLabel())->toBe('Sweden');
 });
+
+// +379 is assigned to the Vatican but was never put into service; its numbers are Italian.
+it('gives the vatican the dialling code its numbers actually use', function () {
+    expect(CountriesEnum::VA->getDialCode())->toBe('+39');
+});

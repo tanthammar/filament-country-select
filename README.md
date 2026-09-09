@@ -153,6 +153,8 @@ Ocean Territory `+246`. Typing the `+` narrows it: `+46` finds Sweden alone.
 It takes a closure, like any Filament configuration method:
 
 ```php
+use Filament\Schemas\Components\Utilities\Get;
+
 CountrySelect::make('country_code')->phone(fn (Get $get): bool => $get('type') === 'phone');
 ```
 
@@ -175,6 +177,7 @@ Fuse the select with a number input and combine the two on save:
 ```php
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\FusedGroup;
+use Filament\Schemas\Components\Utilities\Get;
 use TantHammar\FilamentCountrySelect\Enums\CountriesEnum;
 use TantHammar\FilamentCountrySelect\Forms\Components\CountrySelect;
 
@@ -193,6 +196,32 @@ FusedGroup::make([
             : null),
 ])->columns(3);
 ```
+
+## Validation
+
+`CountrySelect` validates against its generated options by default. Dynamically disabled option fails in validation.
+
+### Store country name based on selected country code
+
+Once the code is validated, another field can be filled from it on save. 
+By default it returns the country name in current app locale but you can optionally pass the translation you want.
+
+Example to get the country name in English from the selected country code.
+
+```php
+use Filament\Forms\Components\Hidden;
+use Filament\Schemas\Components\Utilities\Get;
+use TantHammar\FilamentCountrySelect\Enums\CountriesEnum;
+use TantHammar\FilamentCountrySelect\Forms\Components\CountrySelect;
+
+CountrySelect::make('country_code')->required();
+Hidden::make('country')
+    ->dehydrateStateUsing(fn (Get $get): string => CountriesEnum::from($get('country_code'))
+    ->getName('en')), //return country name in given translation, leave blank for current locale
+```
+
+A visible `TextInput` fills the same way. Making `country_code` required and valid is what keeps `from()` safe
+here, and that is yours to do.
 
 ## The countries
 

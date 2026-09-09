@@ -99,3 +99,17 @@ it('builds the same flag url from the enum and from a component', function () {
     expect($select->getCountryFlagUrl('SE'))->toBe(CountriesEnum::SE->getFlagUrl())
         ->and($select->getCountries()['SE'])->toContain(CountriesEnum::SE->getFlagUrl());
 });
+
+it('validates against every code it offers', function () {
+    $select = CountrySelect::make('country_code')->showFlags()->phone()->only(['SE', 'NO'])->add(['XX' => 'Other']);
+
+    expect($select->getInValidationRuleValues())->toBe(['NO', 'SE', 'XX']);
+});
+
+it('leaves a disabled option out of what it validates against', function () {
+    $select = CountrySelect::make('country_code')
+        ->only(['SE', 'NO'])
+        ->disableOptionWhen(fn (string $value): bool => $value === 'NO');
+
+    expect($select->getInValidationRuleValues())->toBe(['SE']);
+});

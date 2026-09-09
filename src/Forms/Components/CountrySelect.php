@@ -25,6 +25,8 @@ class CountrySelect extends Select
         $this->allowHtml(fn (): bool => $this->getShowFlags());
         $this->optionsLimit(config('filament-country-select.options-limit') ?? 50);
 
+        $this->in(fn (CountrySelect $component): array => $component->getValidationKeys());
+
         $this->searchable();
 
         $this->getSearchResultsUsing(fn (string $search): array => $this->buildOptions(
@@ -47,5 +49,27 @@ class CountrySelect extends Select
     protected function rendersHtmlOptions(): bool
     {
         return $this->getShowFlags();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function getValidationKeys(): array
+    {
+        $countries = $this->getCountriesData();
+
+        if (! $this->hasDisabledOptions()) {
+            return array_column($countries, 'key');
+        }
+
+        $codes = [];
+
+        foreach ($countries as $country) {
+            if (! $this->isOptionDisabled($country['key'], $country['label'])) {
+                $codes[] = $country['key'];
+            }
+        }
+
+        return $codes;
     }
 }
