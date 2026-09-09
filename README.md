@@ -7,6 +7,10 @@ The Country Select returns the **ISO 3166-1 alpha-2 country code** (`SE`, `US`, 
 The package has helpers to resolve the dialling code from a country code — see
 [Dialling codes](#dialling-codes).
 
+`CountrySelect` is searchable by dialling code or country name.
+
+`CountriesEnum` has many useful helpers.
+
 
 ## Installation
 
