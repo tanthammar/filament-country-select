@@ -249,18 +249,19 @@ It needs the flags to have been [published](#flags).
 {{ $country->getFlag('h-4 w-5 rounded') }}
 ```
 
-On a component, `getCountryLabel()` and `getCountryFlagUrl()` returns `null` for an unknown value, 
-rather than throwing for an [added entry](#shaping-the-list) that is not a country:
 
 ### `getCountryLabel`,  `getCountryFlagUrl`, `getCountryFlagUrl`
 
+On a `CountrySelect` component, `getCountryLabel()` and `getCountryFlagUrl()` returns `null` for an unknown value, 
+rather than throwing for an [added entry](#shaping-the-list) that is not a country:
+
 ```php
-$select->getCountryLabel('SE');     // 'Sweden'
-$select->getCountryFlagUrl('SE');   // '/vendor/.../SE.png'
-$select->getCountryFlagUrl('XX');   // null
+fn( CountrySelect $component ) => ?string $component->getCountryLabel('SE');     // 'Sweden'
+fn( CountrySelect $component ) => ?string $component->getCountryFlagUrl('SE');   // '/vendor/.../SE.png'
+fn( CountrySelect $component ) => ?string $component->getCountryFlagUrl('XX');   // null
 ```
 
-###`getEmojiFlag()` 
+### `getEmojiFlag()` 
 Is for places an image cannot go — a plain text mail, a CSV. 
 Whether it draws as a flag or as two letters depends on the reader's system: 
 Windows may print two letters instead of the emoji.
