@@ -3,7 +3,9 @@
 namespace TantHammar\FilamentCountrySelect\Tables\Filters;
 
 use Filament\Forms\Components\Select;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Support\Arr;
 use TantHammar\FilamentCountrySelect\Concerns\HasCountryData;
 use TantHammar\FilamentCountrySelect\Concerns\HasCountryList;
 use TantHammar\FilamentCountrySelect\Concerns\HasCountryOptions;
@@ -34,6 +36,25 @@ class CountrySelectFilter extends SelectFilter
         $this->modifyFormFieldUsing(fn (Select $field) => $field
             ->allowHtml(fn () => $this->getShowFlags())
         );
+
+        $this->indicateUsing(function (array $state): array {
+            $labels = collect($this->isMultiple() ? ($state['values'] ?? []) : Arr::wrap($state['value'] ?? null))
+                ->map(fn (mixed $value): ?string => $this->getCountryLabel(is_string($value) ? $value : null))
+                ->filter()
+                ->join(', ', ' & ');
+
+            if (blank($labels)) {
+                return [];
+            }
+
+            $indicator = $this->getIndicator();
+
+            if (! $indicator instanceof Indicator) {
+                $indicator = Indicator::make("{$indicator}: {$labels}");
+            }
+
+            return [$indicator];
+        });
     }
 
     protected function rendersHtmlOptions(): bool
