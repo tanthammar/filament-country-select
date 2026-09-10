@@ -95,11 +95,25 @@ trait HasCountryData
     protected function matching(string $search): array
     {
         $searchesDialCodes = $this->getPhone();
+        $code = mb_strtoupper(trim($search));
 
-        return array_filter(
-            $this->getCountriesData(),
-            fn (array $country): bool => mb_stripos($country['label'], $search) !== false
-                || ($searchesDialCodes && $country['dial_code'] !== null && str_contains($country['dial_code'], $search))
-        );
+        $exact = [];
+        $rest = [];
+
+        foreach ($this->getCountriesData() as $country) {
+            if (mb_strtoupper($country['key']) === $code) {
+                $exact[] = $country;
+
+                continue;
+            }
+
+            if (mb_stripos($country['label'], $search) !== false
+                || mb_stripos($country['key'], $search) !== false
+                || ($searchesDialCodes && $country['dial_code'] !== null && str_contains($country['dial_code'], $search))) {
+                $rest[] = $country;
+            }
+        }
+
+        return [...$exact, ...$rest];
     }
 }

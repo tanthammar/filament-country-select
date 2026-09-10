@@ -58,3 +58,19 @@ it('searches the dialling code when it shows one', function () {
     expect(CountrySelect::make('country_code')->phone()->getSearchResults('+46'))->toBe(['SE' => 'Sweden +46'])
         ->and(CountrySelect::make('country_code')->getSearchResults('+46'))->toBe([]);
 });
+
+it('searches by country code, exact match first', function () {
+    app()->setLocale('sv');
+
+    $select = CountrySelect::make('country_code');
+
+    expect(array_key_first($select->getSearchResults('SE')))->toBe('SE')
+        ->and(array_key_first($select->getSearchResults('se')))->toBe('SE')
+        ->and($select->getSearchResults('SE'))->toHaveKey('SC');
+});
+
+it('searches an added entry by its key', function () {
+    $select = CountrySelect::make('country_code')->only(['SE'])->add(['XX' => 'Other']);
+
+    expect($select->getSearchResults('XX'))->toBe(['XX' => 'Other']);
+});

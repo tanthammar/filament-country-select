@@ -7,7 +7,7 @@ The Country Select returns the **ISO 3166-1 alpha-2 country code** (`SE`, `US`, 
 The package has helpers to resolve the dialling code from a country code — see
 [Dialling codes](#dialling-codes).
 
-`CountrySelect` is searchable by dialling code or country name.
+`CountrySelect` is searchable by country code, dialling code and country name in current locale.
 
 `CountriesEnum` has many useful helpers.
 
@@ -154,7 +154,10 @@ CountrySelect::make('country_code')->phone()->showFlags();  // label: "🇸🇪 
 CountrySelect::make('country_code')->phone(fn (Get $get): bool => $get('type') === 'phone'); //example closure
 ```
 
-The search is `%{$searchTerm}%`, so `46` finds Sweden and other countries. Typing `+46` finds Sweden alone.
+### Search by country code, dialling code or country name
+- The search is `%{$searchTerm}%`, so `46` finds Sweden and other countries. Typing `+46` finds Sweden alone.
+- Otherwise the search works like normal Filament select. Country names are matched in the current app locale.
+- The country code is searchable too, and an exact code match is listed first, so `SE` puts Sweden above Senegal.
 
 ### Get dialling code from country code
 
@@ -250,15 +253,19 @@ It needs the flags to have been [published](#flags).
 ```
 
 
-### `getCountryLabel`,  `getCountryFlagUrl`, `getCountryFlagUrl`
+### `getCountryLabel`, `getCountryFlagUrl`
 
-On a `CountrySelect` component, `getCountryLabel()` and `getCountryFlagUrl()` returns `null` for an unknown value, 
-rather than throwing for an [added entry](#shaping-the-list) that is not a country:
+On `CountrySelect`, `CountryColumn` and `CountrySelectFilter`. Reach the component through closure injection:
 
 ```php
-fn( CountrySelect $component ) => ?string $component->getCountryLabel('SE');     // 'Sweden'
-fn( CountrySelect $component ) => ?string $component->getCountryFlagUrl('SE');   // '/vendor/.../SE.png'
-fn( CountrySelect $component ) => ?string $component->getCountryFlagUrl('XX');   // null
+// fn( CountrySelect $component ): ?string => $component->...
+$component->getCountryLabel('SE');     // 'Sweden'
+$component->getCountryLabel('XX');     // 'Other', ->add(['XX' => 'Other']) entry keeps its label
+$component->getCountryLabel('nope');   // null
+
+$component->getCountryFlagUrl('SE');   // '/vendor/filament-country-select/flags/SE.png'
+$component->getCountryFlagUrl('XX');   // null, ->add(['XX'...]) entry is not a country
+$component->getCountryFlagUrl('nope'); // null, invalid returns null
 ```
 
 ### `getEmojiFlag()` 
@@ -271,6 +278,8 @@ Windows may print two letters instead of the emoji.
 `tryFromName()` answers "which country is this?" 
 It matches, after trimming and folding case: an alpha-2 code, an alpha-3 code, a name in **any** of the 38 shipped languages, and a
 short list of other names for the country itself — former official names, English exonyms and abbreviations.
+
+_(This has nothing to do with searching in the `CountrySelect` component, which is controlled by current app locale)._
 
 ```php
 CountriesEnum::tryFromName('Sverige');        // SE
