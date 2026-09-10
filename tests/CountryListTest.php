@@ -83,9 +83,11 @@ it('gives an added entry no flag', function () {
         ->and($select->getCountries()['XX'])->not->toContain('<img');
 });
 
-it('does not offer flags on a filter that cannot draw them', function () {
-    expect(method_exists(CountrySelectFilter::class, 'showFlags'))->toBeFalse()
-        ->and(method_exists(CountrySelectFilter::class, 'phone'))->toBeTrue();
+it('draws flags on a filter when asked to', function () {
+    $filter = CountrySelectFilter::make('country_code');
+
+    expect($filter->getCountries()['SE'])->not->toContain('<img')
+        ->and($filter->showFlags()->getCountries()['SE'])->toContain('flags/SE.png');
 });
 
 it('renders the column without the blade engine', function () {

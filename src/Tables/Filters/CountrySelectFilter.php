@@ -2,10 +2,12 @@
 
 namespace TantHammar\FilamentCountrySelect\Tables\Filters;
 
+use Filament\Forms\Components\Select;
 use Filament\Tables\Filters\SelectFilter;
 use TantHammar\FilamentCountrySelect\Concerns\HasCountryData;
 use TantHammar\FilamentCountrySelect\Concerns\HasCountryList;
 use TantHammar\FilamentCountrySelect\Concerns\HasCountryOptions;
+use TantHammar\FilamentCountrySelect\Concerns\HasFlags;
 use TantHammar\FilamentCountrySelect\Concerns\HasPhoneCode;
 
 class CountrySelectFilter extends SelectFilter
@@ -13,6 +15,7 @@ class CountrySelectFilter extends SelectFilter
     use HasCountryData;
     use HasCountryList;
     use HasCountryOptions;
+    use HasFlags;
     use HasPhoneCode;
 
     protected function setUp(): void
@@ -27,5 +30,14 @@ class CountrySelectFilter extends SelectFilter
         $this->getSearchResultsUsing(fn (string $search): array => $this->buildOptions(
             $this->matching($search)
         ));
+
+        $this->modifyFormFieldUsing(fn (Select $field) => $field
+            ->allowHtml(fn () => $this->getShowFlags())
+        );
+    }
+
+    protected function rendersHtmlOptions(): bool
+    {
+        return $this->getShowFlags();
     }
 }
