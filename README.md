@@ -81,6 +81,8 @@ CountrySelect::make('country_code')
 
 ## Table column
 
+The table column displays the country name based on the country code value.
+
 ```php
 use TantHammar\FilamentCountrySelect\Tables\Columns\CountryColumn;
 
