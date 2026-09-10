@@ -22,10 +22,10 @@ trait HasCountryOptions
      * @param  iterable<array{key: string, iso_code: ?string, label: string, dial_code: ?string}>  $countries
      * @return array<string, string>
      */
-    public function buildOptions(iterable $countries, bool $compileHtml = true): array
+    public function buildOptions(iterable $countries): array
     {
         $withDialCode = $this->getPhone();
-        $asHtml = $compileHtml && $this->rendersHtmlOptions();
+        $asHtml = $this->rendersHtmlOptions();
 
         $options = [];
 

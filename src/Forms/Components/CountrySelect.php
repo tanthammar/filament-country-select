@@ -30,7 +30,7 @@ class CountrySelect extends Select
         $this->searchable();
 
         $this->getSearchResultsUsing(fn (string $search): array => $this->buildOptions(
-            $this->matching($search), false
+            $this->matching($search)
         ));
 
         $this->getOptionLabelUsing(function ($value): ?string {

@@ -25,7 +25,7 @@ class CountrySelectFilter extends SelectFilter
         $this->searchable();
 
         $this->getSearchResultsUsing(fn (string $search): array => $this->buildOptions(
-            $this->matching($search), false
+            $this->matching($search)
         ));
     }
 }
