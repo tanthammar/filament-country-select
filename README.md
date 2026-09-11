@@ -124,7 +124,7 @@ php artisan vendor:publish --tag="filament-country-select-flags"
 
 The css must be added to your tailwind theme
 ```css
-/* resources/css/filament.css */
+/* your-filament-theme.css */
 @source '../../vendor/tanthammar/filament-country-select/src/**/*.php';
 ```
 
