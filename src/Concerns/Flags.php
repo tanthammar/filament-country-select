@@ -10,13 +10,13 @@ trait Flags
     /** Filament icon ratio is 4:3. Avoid squashing icon. */
     public function getIcon(): Htmlable
     {
-        return $this->getFlag('size-full object-contain self-center');
+        return $this->getFlag('size-full object-contain self-center country-select-flag');
     }
 
     /**
      * Flags must be published.
      */
-    public function getFlag(string $class = 'h-5 w-6 shrink-0 object-contain self-center'): HtmlString
+    public function getFlag(string $class = 'h-5 w-6 shrink-0 object-contain self-center country-select-flag'): HtmlString
     {
         return new HtmlString(
             '<img src="'.e($this->getFlagUrl()).'" alt="" width="32" height="24" class="'.e($class).'" loading="lazy">'

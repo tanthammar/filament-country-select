@@ -31,10 +31,15 @@ Publish the flags if you want to show them in the select
 php artisan vendor:publish --tag="filament-country-select-flags"
 ```
 
-Add package css to your tailwind theme if you want to display flags
+
+Add package css to your tailwind theme if you want to display flags. Every flag has a blank css class `country-select-flag`. Use it to modify styling.
+
 ```css
 /* your-filament-theme.css */
+
 @source '../../vendor/tanthammar/filament-country-select/src/**/*.php';
+
+.country-select-flag {}
 ```
 
 ## Render time
