@@ -31,14 +31,26 @@ Publish the flags if you want to show them in the select
 php artisan vendor:publish --tag="filament-country-select-flags"
 ```
 
+Add package css to your tailwind theme if you want to display flags
+```css
+/* your-filament-theme.css */
+@source '../../vendor/tanthammar/filament-country-select/src/**/*.php';
+```
+
 ## Render time
+A lot of time has been spent on optimising load time. Image type, alphabetically sorting for each locale, how HTML options are generated etc.
 
-A country select carrying all 246 options;
+A country select carrying all 246 options. Warm is a Livewire re-render, or any further select on the page;
 
-| per select, 246 countries | time | options html |
-| --- | --- | --- |
-| default | 1.0 ms | 2.3 KB |
-| `->showFlags()->phone()` | 1.9 ms | 60 KB |
+| per select, 246 countries | cold  | warm    | options html |
+|---------------------------|-------|---------|--------------|
+| default                   | ~5 ms | 0.24 ms | 2.3 KB       |
+| `->phone()`               | ~5 ms | 0.25 ms | 3.5 KB       |
+| `->showFlags()`           | ~6 ms | 1.08 ms | 50.4 KB      |
+| `->showFlags()->phone()`  | ~6 ms | 1.11 ms | 58.5 KB      |
+
+Cold is paid once per request, not per select, and most of it is Filament building its first component and PHP
+loading the classes — shared with every other field on the page, and largely absorbed by opcache in production.
 
 
 # Usage
@@ -110,6 +122,12 @@ Flags are **off by default** and have to be published before they can be shown:
 php artisan vendor:publish --tag="filament-country-select-flags"
 ```
 
+The css must be added to your tailwind theme
+```css
+/* resources/css/filament.css */
+@source '../../vendor/tanthammar/filament-country-select/src/**/*.php';
+```
+
 ```php
 CountrySelect::make('country_code')->showFlags();
 CountryColumn::make('country_code')->showFlags();
@@ -124,8 +142,6 @@ Flags are 32×24 PNGs, about 1 KB each and **_only 272 KB for all flags_**.
 Inlining a flag into every option puts the whole flag library into the page. 
 The flags are added to the page once for each input in a form. Consider this if used in a repeater. 
 Once fetched, the browser caches them across every page.
-
-
 
 ### Change where flags are published
 
@@ -170,7 +186,7 @@ CountriesEnum::from('SE')->getDialCode();   // '+46'
 ```
 
 ### Building a phone number field
-Dialling codes are not unique, like +1 is both US and CA, +7 both RU and KZ...
+**_Dialling codes are not unique_**, like +1 is both US and CA, +7 both RU and KZ...
 So, if you want to build a phone input and store the dialling code, you need a country code select which controls the stored value. 
 Trying to populate the country code select from a stored dial code would select first found, which could be another country than intended.
 
@@ -202,9 +218,20 @@ FusedGroup::make([
 ])->columns(3);
 ```
 
-## Validation
+### `->getCountryLabel()`, `getCountryFlagUrl()`
 
-`CountrySelect` validates against its generated options by default. Dynamically disabled option fails in validation.
+On `CountrySelect`, `CountryColumn` and `CountrySelectFilter`. Reach the component through closure injection:
+
+```php
+// fn( CountrySelect $component ): ?string => $component->...
+$component->getCountryLabel('SE');     // 'Sweden'
+$component->getCountryLabel('XX');     // 'Other', ->add(['XX' => 'Other']) entry keeps its label
+$component->getCountryLabel('nope');   // null
+
+$component->getCountryFlagUrl('SE');   // '/vendor/filament-country-select/flags/SE.png'
+$component->getCountryFlagUrl('XX');   // null, ->add(['XX'...]) entry is not a country
+$component->getCountryFlagUrl('nope'); // null, invalid returns null
+```
 
 ### Store country name based on selected country code
 
@@ -224,9 +251,84 @@ Hidden::make('country')
     ->getName('en')), //return country name in given translation, leave blank for current locale
 ```
 
+## Validation
+
+`CountrySelect` validates against its generated options by default. Dynamically disabled option fails in validation.
+
+
+## Dialling Code Enum
+For your convenience there is an enum for dialling codes.
+Implements Filament enum interfaces. This means that you can use the enum on its own using Filament standards.
+
+**OBSERVE** that this only controls the label not the stored value. The `$state` is still a country code. Dialling codes are not unique. See [Dialling codes](#dialling-codes)
+
+
+- This enum adds the dialling code to the label.
+- You do **not** have the helpers to add, exclude, only etc.
+- **_You will not get the correct sorting alphabetically_**, in each locale, as the generated options uses the order in the enum instead of translation files.
+- See Filament documentation on how to use the enum icon features.
+
+
+```php
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Filters\SelectFilter;
+use TantHammar\FilamentCountrySelect\Enums\DialCodeEnum;
+
+Select::make('country_code')
+    ->options(DialCodeEnum::class)
+
+CheckboxList::make('country_code')
+    ->options(DialCodeEnum::class)
+
+Radio::make('country_code')
+    ->options(DialCodeEnum::class)
+
+SelectColumn::make('country_code')
+    ->options(DialCodeEnum::class)
+
+SelectFilter::make('country_code')
+    ->options(DialCodeEnum::class)
+```
+
 ## Countries Enum
 
-`CountriesEnum` is the entire country list, usable on its own. It backs every ISO 3166-1 alpha-2 country plus `XK`
+Implements Filament enum interfaces. This means that you can use the enum on its own using Filament standards.
+
+- This enum shows the country name as the label.
+- You do **not** have the helpers to add, exclude, only etc.
+- **_You will not get the correct sorting alphabetically_**, in each locale, as the generated options uses the order in the enum instead of translation files.
+- See Filament documentation on how to use the enum icon features.
+
+```php
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Filters\SelectFilter;
+use TantHammar\FilamentCountrySelect\Enums\CountriesEnum;
+
+Select::make('country_code')
+    ->options(CountriesEnum::class)
+
+CheckboxList::make('country_code')
+    ->options(CountriesEnum::class)
+
+Radio::make('country_code')
+    ->options(CountriesEnum::class)
+
+SelectColumn::make('country_code')
+    ->options(CountriesEnum::class)
+
+SelectFilter::make('country_code')
+    ->options(CountriesEnum::class)
+```
+
+
+## Enum features
+Both enums cases are the entire country list, usable on its own. It backs every ISO 3166-1 alpha-2 country plus `XK`
 for Kosovo, which has no ISO code. The list only contains countries that have a dialling code.
 
 ```php
@@ -244,36 +346,38 @@ $country->getEmojiFlag();   // '🇸🇪'
 $country->value;            // 'SE'
 ```
 
+`CountriesEnum`  and `DialCodeEnum` implements Filament `HasIcon`.
+#### Using the enum icon with a text column in your table
+
+If you use a `TextColumn` with the Table Builder, and it is cast to an enum in your Eloquent model, Filament will automatically use the `HasIcon` interface to display the enum’s icon aside its label. This works best if you use the `badge()` method on the column.
+
+#### Using the enum icon with a text entry in your infolist
+
+If you use a `TextEntry` in an infolist, and it is cast to an enum in your Eloquent model, Filament will automatically use the `HasIcon` interface to display the enum’s icon aside its label. This works best if you use the `badge()` method on the entry.
+
+#### Using the enum icon with a toggle buttons field in your form
+
+If you use a `ToggleButtons` form field, and it is set to use an enum for its options, Filament will automatically use the `HasIcon` interface to display the enum’s icon aside its label.
+
+
 ### `getFlag()` 
 
 Output an `<img>` tag in a blade file.
 It needs the flags to have been [published](#flags).
 
 ```blade
-{{ $country->getFlag() }}
-{{ $country->getFlag('h-4 w-5 rounded') }}
-```
-
-
-### `getCountryLabel`, `getCountryFlagUrl`
-
-On `CountrySelect`, `CountryColumn` and `CountrySelectFilter`. Reach the component through closure injection:
-
-```php
-// fn( CountrySelect $component ): ?string => $component->...
-$component->getCountryLabel('SE');     // 'Sweden'
-$component->getCountryLabel('XX');     // 'Other', ->add(['XX' => 'Other']) entry keeps its label
-$component->getCountryLabel('nope');   // null
-
-$component->getCountryFlagUrl('SE');   // '/vendor/filament-country-select/flags/SE.png'
-$component->getCountryFlagUrl('XX');   // null, ->add(['XX'...]) entry is not a country
-$component->getCountryFlagUrl('nope'); // null, invalid returns null
+{{ $enum->getFlag() }}
+{{ $enum->getFlag('h-4 w-5 rounded') }}
 ```
 
 ### `getEmojiFlag()` 
 Is for places an image cannot go — a plain text mail, a CSV. 
 Whether it draws as a flag or as two letters depends on the reader's system: 
 Windows may print two letters instead of the emoji.
+
+```php 
+$enum->getEmojiFlag();
+```
 
 ### Resolving a country from a name  `tryFromName`
 
@@ -345,6 +449,9 @@ Publish translation files:
 php artisan vendor:publish --tag="filament-country-select-translations"
 ```
 
+The options are listed in the order the language file lists them, so a published file you edit also decides what
+the dropdown order is. Keep it sorted for its language.
+
 
 ## Testing
 
@@ -369,6 +476,26 @@ composer test
 | `ru` Russian | `sk` Slovak | `sl` Slovenian | `sr` Serbian |
 | `sv` Swedish | `th` Thai | `tr` Turkish | `uk` Ukrainian |
 | `zh` Chinese (Simplified) | `zh_TW` Chinese (Traditional) | | |
+
+## Contributing
+
+The select does not sort at runtime — **the order of the language file is the order of the options**. Each file is
+therefore sorted for its own language, `Å` and `Ö` last in Swedish, `Ä` among the `A`s in German.
+
+After adding a language, a country, or renaming one, put the entry anywhere and run:
+
+```bash
+composer sort-lang
+```
+
+It rewrites every language file, sorted with that language's own `Collator`. Needs `ext-intl`.
+
+A test asserts each shipped file is sorted for its language and names the one that is not, so an entry appended to
+the end fails the suite rather than quietly appearing last in the dropdown.
+
+```bash
+composer test
+```
 
 ## Credits
 Country names come from [umpirsky/country-list](https://github.com/umpirsky/country-list) (CLDR). Country codes

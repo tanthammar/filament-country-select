@@ -109,3 +109,26 @@ it('resolves a country from a backed enum', function () {
 
     expect($column->getCountryLabel(CountriesEnum::SE))->toBe('Sweden');
 });
+
+it('lifts chosen countries to the top in the order given', function () {
+    $options = CountrySelectFilter::make('country_code')->putFirst(['SE', 'no', 'DK'])->getCountries();
+
+    expect(array_slice(array_keys($options), 0, 4))->toBe(['SE', 'NO', 'DK', 'AF'])
+        ->and($options)->toHaveCount(246);
+});
+
+it('ignores a pinned country that is not in the list', function () {
+    $options = CountrySelectFilter::make('country_code')->only(['SE', 'NO'])->putFirst(['DE', 'NO'])->getCountries();
+
+    expect(array_keys($options))->toBe(['NO', 'SE']);
+});
+
+it('keeps added entries last when countries are pinned', function () {
+    $options = CountrySelectFilter::make('country_code')
+        ->only(['SE', 'NO', 'DK'])
+        ->putFirst(['DK'])
+        ->add(['XX' => 'Other'])
+        ->getCountries();
+
+    expect(array_keys($options))->toBe(['DK', 'NO', 'SE', 'XX']);
+});

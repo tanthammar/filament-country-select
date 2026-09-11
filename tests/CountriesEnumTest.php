@@ -1,5 +1,8 @@
 <?php
 
+use Filament\Support\Contracts\HasIcon;
+use Filament\Support\Contracts\HasLabel;
+use Illuminate\Contracts\Support\Htmlable;
 use TantHammar\FilamentCountrySelect\Enums\CountriesEnum;
 
 it('uses the uppercase iso 3166-1 alpha-2 code as its value', function () {
@@ -126,4 +129,35 @@ it('falls back to its own language, not the application one', function () {
 // +379 is assigned to the Vatican but was never put into service; its numbers are Italian.
 it('gives the vatican the dialling code its numbers actually use', function () {
     expect(CountriesEnum::VA->getDialCode())->toBe('+39');
+});
+
+it('offers its flag as a filament icon', function () {
+    $icon = CountriesEnum::SE->getIcon();
+
+    expect($icon)->toBeInstanceOf(Htmlable::class)
+        ->and((string) $icon)->toContain('flags/SE.png')
+        ->and((string) $icon)->toContain('size-full object-contain')
+        ->and(CountriesEnum::SE)->toBeInstanceOf(HasIcon::class)
+        ->and(CountriesEnum::SE)->toBeInstanceOf(HasLabel::class);
+});
+
+// The option order is the file order, so each language file has to be sorted for its own language.
+it('ships every language file sorted by its own collation', function () {
+    foreach (glob(__DIR__.'/../resources/lang/*', GLOB_ONLYDIR) as $dir) {
+        $locale = basename($dir);
+        $names = array_values(require $dir.'/countries.php');
+
+        $sorted = $names;
+        (new Collator($locale))->sort($sorted);
+
+        expect($names)->toBe($sorted, "{$locale} is out of order");
+    }
+})->skip(! extension_loaded('intl'), 'ext-intl is required to check collation');
+
+it('orders options by the current language, not by english', function () {
+    app()->setLocale('sv');
+
+    $names = array_values(CountriesEnum::names());
+
+    expect(array_slice($names, -3))->toBe(['Åland', 'Österrike', 'Östtimor']);
 });

@@ -49,6 +49,7 @@
     },
     "scripts": {
         "analyse": "vendor/bin/phpstan analyse",
+        "sort-lang": "@php bin/sort-lang.php",
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
         "format": "vendor/bin/pint"

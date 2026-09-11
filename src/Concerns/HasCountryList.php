@@ -12,6 +12,8 @@ trait HasCountryList
 
     protected array|Closure $add = [];
 
+    protected array|Closure $putFirst = [];
+
     public function only(array|Closure $countries): static
     {
         $this->only = $countries;
@@ -22,6 +24,14 @@ trait HasCountryList
     public function exclude(array|Closure $countries): static
     {
         $this->exclude = $countries;
+
+        return $this;
+    }
+
+    /** Lift these countries to the top of the list, in the order given. */
+    public function putFirst(array|Closure $countries): static
+    {
+        $this->putFirst = $countries;
 
         return $this;
     }
@@ -44,6 +54,12 @@ trait HasCountryList
     public function getExclude(): array
     {
         return array_map(strtoupper(...), $this->evaluate($this->exclude));
+    }
+
+    /** @return array<int, string> */
+    public function getPutFirst(): array
+    {
+        return array_map(strtoupper(...), $this->evaluate($this->putFirst));
     }
 
     /** @return array<string, string> */

@@ -9,8 +9,7 @@ use TantHammar\FilamentCountrySelect\Concerns\EnumDialCode;
 use TantHammar\FilamentCountrySelect\Concerns\EnumLookups;
 use TantHammar\FilamentCountrySelect\Concerns\Flags;
 
-/** ISO 3166-1 alpha-2, plus XK for Kosovo, which has no ISO code of its own. */
-enum CountriesEnum: string implements HasIcon, HasLabel
+enum DialCodeEnum: string implements HasIcon, HasLabel
 {
     use EnumAlpha3;
     use EnumDialCode;
@@ -19,7 +18,7 @@ enum CountriesEnum: string implements HasIcon, HasLabel
 
     public function getLabel(): string
     {
-        return $this->getName();
+        return $this->getName().' '.$this->getDialCode();
     }
 
     case AF = 'AF';

@@ -28,19 +28,32 @@ trait HasCountryData
         $only = $this->getOnly();
         $exclude = $this->getExclude();
 
-        $countries = collect(CountriesEnum::cases())
-            ->when($only !== [], fn ($countries) => $countries->filter(
-                fn (CountriesEnum $country): bool => in_array($country->value, $only, true)
-            ))
-            ->reject(fn (CountriesEnum $country): bool => in_array($country->value, $exclude, true))
-            ->map(fn (CountriesEnum $country): array => [
-                'key' => $country->value,
-                'iso_code' => $country->value,
-                'label' => $country->getLabel(),
+        $countries = [];
+
+        foreach (CountriesEnum::names() as $code => $label) {
+            $country = CountriesEnum::tryFrom($code);
+
+            if ($country === null) {
+                continue;
+            }
+
+            if ($only !== [] && ! in_array($code, $only, true)) {
+                continue;
+            }
+
+            if (in_array($code, $exclude, true)) {
+                continue;
+            }
+
+            $countries[] = [
+                'key' => $code,
+                'iso_code' => $code,
+                'label' => $label,
                 'dial_code' => $country->getDialCode(),
-            ])
-            ->values()
-            ->all();
+            ];
+        }
+
+        $countries = $this->sortPutFirst($countries);
 
         foreach ($this->getAdd() as $key => $label) {
             $countries[] = [
@@ -87,6 +100,31 @@ trait HasCountryData
         $isoCode = $this->getCountry($key)['iso_code'] ?? null;
 
         return $isoCode === null ? null : CountriesEnum::from($isoCode)->getFlagUrl();
+    }
+
+    /**
+     * @param  array<int, array{key: string, iso_code: ?string, label: string, dial_code: ?string}>  $countries
+     * @return array<int, array{key: string, iso_code: ?string, label: string, dial_code: ?string}>
+     */
+    protected function sortPutFirst(array $countries): array
+    {
+        $putFirst = $this->getPutFirst();
+
+        if ($putFirst === []) {
+            return $countries;
+        }
+
+        $remaining = array_column($countries, null, 'key');
+        $pinned = [];
+
+        foreach ($putFirst as $code) {
+            if (isset($remaining[$code])) {
+                $pinned[] = $remaining[$code];
+                unset($remaining[$code]);
+            }
+        }
+
+        return [...$pinned, ...array_values($remaining)];
     }
 
     /**
