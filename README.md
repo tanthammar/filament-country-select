@@ -266,7 +266,7 @@ Implements Filament enum interfaces. This means that you can use the enum on its
 - This enum adds the dialling code to the label.
 - You do **not** have the helpers to add, exclude, only etc.
 - **_You will not get the correct sorting alphabetically_**, in each locale, as the generated options uses the order in the enum instead of translation files.
-- See Filament documentation on how to use the enum icon features.
+- No flags. See below and Filament documentation on how to use the enum icon features.
 
 
 ```php
@@ -277,13 +277,13 @@ use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Filters\SelectFilter;
 use TantHammar\FilamentCountrySelect\Enums\DialCodeEnum;
 
-Select::make('country_code')
+Select::make('country_code') //no flags
     ->options(DialCodeEnum::class)
 
-CheckboxList::make('country_code')
+CheckboxList::make('country_code') //no flags
     ->options(DialCodeEnum::class)
 
-Radio::make('country_code')
+Radio::make('country_code') //no flags
     ->options(DialCodeEnum::class)
 
 SelectColumn::make('country_code')
@@ -300,7 +300,7 @@ Implements Filament enum interfaces. This means that you can use the enum on its
 - This enum shows the country name as the label.
 - You do **not** have the helpers to add, exclude, only etc.
 - **_You will not get the correct sorting alphabetically_**, in each locale, as the generated options uses the order in the enum instead of translation files.
-- See Filament documentation on how to use the enum icon features.
+- No flags. See below and Filament documentation on how to use the enum icon features.
 
 ```php
 use Filament\Forms\Components\CheckboxList;
