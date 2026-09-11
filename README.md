@@ -54,9 +54,6 @@ A country select carrying all 246 options. Warm is a Livewire re-render, or any 
 | `->showFlags()`           | ~6 ms | 1.08 ms | 50.4 KB      |
 | `->showFlags()->phone()`  | ~6 ms | 1.11 ms | 58.5 KB      |
 
-Cold is paid once per request, not per select, and most of it is Filament building its first component and PHP
-loading the classes — shared with every other field on the page, and largely absorbed by opcache in production.
-
 
 # Usage
 
